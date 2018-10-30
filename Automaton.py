@@ -23,7 +23,15 @@ class Automaton(object):
            #on construit un automate reconnaissant le langage vide : " "
 
     # ------------------------------------------------------------------------------
-    #def __repr__(self):
+    def __repr__(self):
+        text = "Automaton("
+        text += str(len(self.etats)) + ", "
+        text += str(len(self.alphabet)) + ", "
+        text += str(len(self.transitions)) + ", "
+        text += str(len(self.etats_init)) + ", "
+        text += str(len(self.etats_term)) + ")"
+        return text
+    # ------------------------------------------------------------------------------
         #automate = [__init__.etats, __init__.alphabet, __init__.trans, __init__.etats_init, __init__.etats_term]
         #pour chaque argument dans automate, on veut que le programme convertisse chaque cellule (etats, alphabet...)
         #en une str. Ensuite, il calcule le nombre de valeurs dans cette str, et la remplace dans automate.
@@ -42,7 +50,7 @@ class Automaton(object):
         text += "\nAlphabet :\n "
         for a in self.alphabet: text += a + " "
         text += "\nTransitions :\n"
-        for triplet in self.transitions:
+        for triplet in reversed(self.transitions):
             for c in triplet: text += " " + str(c) + " "
             text += "\n"
         text += "Etats initiaux :\n "
@@ -81,8 +89,14 @@ def verif_trans(transitions,etats, alphabet):
     new_transitions = []
     for triplet in transitions:
         if type(triplet[0])==int and triplet[0] in etats and type(triplet[2])==int and triplet[2] in etats:
-            if type(triplet[1])==str and triplet[1] in alphabet:
-                new_transitions.append(triplet)
+            if type(triplet[1])==str:
+                inAlphabet = True
+                for t in triplet[1]:
+                    if not t in alphabet:
+                        inAlphabet = False
+                        break
+                if inAlphabet== True:
+                    new_transitions.append(triplet)
     if new_transitions == []:
         return None
     else:
@@ -119,6 +133,6 @@ def verif_etats_term(etats_term, etats):
 
 # ==============================================================================
 if __name__ == "__main__":
-    a = Automaton(range(4), "abc", [(0, 'a', 0), (0, 'b', 1), (2, 'c', 3)], [0], [1])
+    a = Automaton(range(4), "abc", [(0, 'a', 0), (0, 'b', 1), (2, 'cc', 3)], [0], [1])
     print(a)
 # ==============================================================================
