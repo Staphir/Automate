@@ -1,3 +1,4 @@
+from automata.rwAutomata import *
 #Ici, le cardinal des ensembles, c'est juste le nombre de valeurs qu'il y a dans ces ensembles
 #Exemple : S = {0,1,3} alors cardinal de S = 3
 
@@ -21,6 +22,22 @@ class Automaton(object):
            #on le traite comme un fichier dans le programme BasicReader
         #mais si un seul de ces arguments existe pas:
            #on construit un automate reconnaissant le langage vide : " "
+
+    # ------------------------------------------------------------------------------
+    #property
+    @property
+    # pas encore bon
+    def automata(self): return "(" + str(self.etats) + ", " + self.alphabet + ", " + str(self.transitions) + ", " + str(self.etats_init) + ", " + str(self.etats_term) + ")"
+    @property
+    def Q(self): return
+    @property
+    def Sigma(self): return
+    @property
+    def Delta(self): return
+    @property
+    def S(self): return
+    @property
+    def T(self): return
 
     # ------------------------------------------------------------------------------
     def __repr__(self):
@@ -133,6 +150,6 @@ def verif_etats_term(etats_term, etats):
 
 # ==============================================================================
 if __name__ == "__main__":
-    a = Automaton(range(4), "abc", [(0, 'a', 0), (0, 'b', 1), (2, 'cc', 3)], [0], [1])
-    print(a)
+    a = Automaton(range(4), "abc", [(0, 'a', 0), (0, 'b', 1), (2, 'cc', 3)], [0,2], [1])
+    # c = BasicReader('automata/automata_0')
 # ==============================================================================
