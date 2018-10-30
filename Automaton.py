@@ -23,13 +23,13 @@ class Automaton(object):
            #on construit un automate reconnaissant le langage vide : " "
 
     # ------------------------------------------------------------------------------
-    def __repr__(self):
+    #def __repr__(self):
         #automate = [__init__.etats, __init__.alphabet, __init__.trans, __init__.etats_init, __init__.etats_term]
         #pour chaque argument dans automate, on veut que le programme convertisse chaque cellule (etats, alphabet...)
         #en une str. Ensuite, il calcule le nombre de valeurs dans cette str, et la remplace dans automate.
 
         #ATTENTION : les transitions sont délimitées par des parenthèses. (1 aa 2) c'est une seule transition et pas 4.
-        #Il faut peut etre compacter chaqye transition (1aa2) puis les décompacter au moment de l'affichage ?
+        #Il faut peut etre compacter chaque transition (1aa2) puis les décompacter au moment de l'affichage ?
 
         #ATTENTION : les valeurs de l'alphabet sont des triplets. je ne sais pas si ça crée une contrainte...
 
@@ -37,6 +37,22 @@ class Automaton(object):
 
     # ------------------------------------------------------------------------------
     def __str__(self):
+        text = "Etats :\n "
+        for e in self.etats: text += str(e) + " "
+        text += "\nAlphabet :\n "
+        for a in self.alphabet: text += a + " "
+        text += "\nTransitions :\n"
+        for triplet in self.transitions:
+            for c in triplet: text += " " + str(c) + " "
+            text += "\n"
+        text += "Etats initiaux :\n "
+        for i in self.etats_init: text += str(i) + " "
+        text += "\nEtats terminaux :\n "
+        for t in self.etats_term: text += str(t) + " "
+
+        return text
+
+    # ------------------------------------------------------------------------------
         #On veut que la fonction permette de choisir un argument pour aller voir ses valeurs. 
         #On prend les informations renvoyées par __repr__ lorsqu'elles ont été converties en str. 
         #Puis on les classe en fonction des états, des transitions... Et on les affiche avec les 
@@ -48,7 +64,6 @@ def verif_etats(etats):
     for etat in etats:
         if isinstance(etat, int):
             new_etats.add(etat)
-            print("type etats incorrect, il faut un int")
     return new_etats
 
 def verif_alphabet(alphabet):
@@ -74,17 +89,25 @@ def verif_trans(transitions,etats, alphabet):
         return new_transitions
     #besoin de test int-str-int dans une boucle car tableau de transitions
 
-def verif_etats_init(etat_init, etats):
-    if not isinstance(etat_init, int) or not etat_init in etats:
-        print("type etats_init incorrect, il faut un int")
-        etat_init = None
-    return etat_init
+def verif_etats_init(etats_init, etats):
+    new_etats_init = []
+    for etat_init in etats_init:
+        if isinstance(etat_init, int) and etat_init in etats:
+            new_etats_init.append(etat_init)
+    if new_etats_init == []:
+        return None
+    else:
+        return new_etats_init
 
-def verif_etats_term(etat_term, etats):
-    if not isinstance(etat_term, int) or not etat_term in etats:
-        print("type etats_term incorrect, il faut un int")
-        etat_term = None
-    return etat_term
+def verif_etats_term(etats_term, etats):
+    new_etats_term = []
+    for etat_term in etats_term:
+        if isinstance(etat_term, int) and etat_term in etats:
+            new_etats_term.append(etat_term)
+    if new_etats_term == []:
+        return None
+    else:
+        return new_etats_term
 
     #Automate fini : Nombre d etats fini
 
@@ -96,5 +119,6 @@ def verif_etats_term(etat_term, etats):
 
 # ==============================================================================
 if __name__ == "__main__":
-
+    a = Automaton(range(4), "abc", [(0, 'a', 0), (0, 'b', 1), (2, 'c', 3)], [0], [1])
+    print(a)
 # ==============================================================================
