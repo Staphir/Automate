@@ -3,13 +3,13 @@
 
 
 class Automaton(object):
-    def __init__(self, etats = None, alphabet = None, trans = None, etats_init = None, etats_term = None):
+    def __init__(self, etats = None, alphabet = None, transitions = None, etats_init = None, etats_term = None):
 
         self.etats = verif_etats(etats)
         # N'accepte que les entiers
         self.alphabet = verif_alphabet(alphabet)
         # N'accepte que les caractères alphanumériques, donc l'alphabet et les chiffres de 0 à 9
-        self.trans = verif_trans(trans, self.alphabet)
+        self.transitions = verif_trans(transitions, self.etats, self.alphabet)
         # N'accepte que les triplets de type int-str-int
         self.etats_init = verif_etats_init(etats_init, self.etats)
         self.etats_term = verif_etats_term(etats_term, self.etats)
@@ -53,18 +53,26 @@ def verif_etats(etats):
 
 def verif_alphabet(alphabet):
     #boucle chaque caractère à faire pour garder que les bon caractères
-    unicode_alphabet = ord(str(alphabet))
-    if 47<unicode_alphabet<58 or 64<unicode_alphabet<91 or 96<unicode_alphabet<123:
-        return alphabet
-    else:
-        print("type alphabet incorrect, il faut un type alphanumérique")
+    new_alphabet = ''
+    for lettre in alphabet:
+        if 47<ord(str(lettre))<58 or 64<ord(str(lettre))<91 or 96<ord(str(lettre))<123:
+            new_alphabet += lettre
+    if new_alphabet == '':
         return None
+    else:
+        return new_alphabet
 
-def verif_trans(trans, alphabet):
+def verif_trans(transitions,etats, alphabet):
+    new_transitions = []
+    for triplet in transitions:
+        if type(triplet[0])==int and triplet[0] in etats and type(triplet[2])==int and triplet[2] in etats:
+            if type(triplet[1])==str and triplet[1] in alphabet:
+                new_transitions.append(triplet)
+    if new_transitions == []:
+        return None
+    else:
+        return new_transitions
     #besoin de test int-str-int dans une boucle car tableau de transitions
-    print("type trans incorrect, il faut int-str-int")
-
-    return trans
 
 def verif_etats_init(etat_init, etats):
     if not isinstance(etat_init, int) or not etat_init in etats:
