@@ -132,4 +132,6 @@ if __name__ == "__main__":
     b = BasicWriter(a.initiaux, a.terminaux, a.transitions, mmc_file)
 
     c = BasicReader(mmc_file)
+    print(c.transitions)
+
 

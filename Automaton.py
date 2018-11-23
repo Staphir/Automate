@@ -4,18 +4,36 @@ from automata.rwAutomata import *
 
 
 class Automaton(object):
-    def __init__(self, etats = None, alphabet = None, transitions = None, etats_init = None, etats_term = None):
+    def __init__(self, *args):
+        if len(args) == 0:
+            self._etats = [0]
+            self._alphabet = ""
+            self._transitions = []
+            self._initiaux = [0]
+            self._terminaux = [0]
+        elif len(args) == 1 and args[0].split(".")[1] == "aut":
+            file = BasicReader(args[0])
+            self._etats = file.etats
+            self._alphabet = file.alphabet
+            self._transitions = file.transitions
+            self._initiaux = file.initiaux
+            self._terminaux = file.terminaux
+        elif len(args) == 5:
+            self._etats = self.verif_etats()
+            # N'accepte que les entiers
+            self._alphabet = self.verif_alphabet()
+            # N'accepte que les caractères alphanumériques, donc l'alphabet et les chiffres de 0 à 9
+            self._transitions = self.verif_trans()
+            # N'accepte que les triplets de type int-str-int
+            self._initiaux = self.verif_initiaux()
+            self._terminaux = self.verif_terminaux()
+        else:
+            print("Automate non conforme vous avez trois choix :\n"
+                  "- Automate() -> automate reconnaissant le langage vide\n"
+                  "- Automate(file.aut) -> automate créé à partir d'un fichier .aut\n"
+                  "- Automate(Q,Sigma,Delta,initial_states,accepting_states)")
 
-        self.etats = verif_etats(etats)
-        # N'accepte que les entiers
-        self.alphabet = verif_alphabet(alphabet)
-        # N'accepte que les caractères alphanumériques, donc l'alphabet et les chiffres de 0 à 9
-        self.transitions = verif_trans(transitions, self.etats, self.alphabet)
-        # N'accepte que les triplets de type int-str-int
-        self.etats_init = verif_etats_init(etats_init, self.etats)
-        self.etats_term = verif_etats_term(etats_term, self.etats)
-
-        #Si etats, alphabet, trans, etats_init et etats_term sont vides :
+        #Si etats, alphabet, trans, initiaux et terminaux sont vides :
            #création d un automate reconnaissant le langage vide : " "
 
         #Pour chaque argument, si il existe:
@@ -26,10 +44,16 @@ class Automaton(object):
     # ------------------------------------------------------------------------------
     #property
     @property
-    # pas encore bon
-    def automata(self): return "(" + str(self.etats) + ", " + self.alphabet + ", " + str(self.transitions) + ", " + str(self.etats_init) + ", " + str(self.etats_term) + ")"
+    def afd(self): return
     @property
-    def Q(self): return
+    def afdc(self): return
+    @property
+    def afn(self): return
+    @property
+    # pas encore bon
+    def automata(self): return "(" + str(self._etats) + ", " + self._alphabet + ", " + str(self._transitions) + ", " + str(self._initiaux) + ", " + str(self._terminaux) + ")"
+    @property
+    def Q(self): return sorted(self._etats)
     @property
     def Sigma(self): return
     @property
@@ -42,14 +66,14 @@ class Automaton(object):
     # ------------------------------------------------------------------------------
     def __repr__(self):
         text = "Automaton("
-        text += str(len(self.etats)) + ", "
-        text += str(len(self.alphabet)) + ", "
-        text += str(len(self.transitions)) + ", "
-        text += str(len(self.etats_init)) + ", "
-        text += str(len(self.etats_term)) + ")"
+        text += str(len(self._etats)) + ", "
+        text += str(len(self._alphabet)) + ", "
+        text += str(len(self._transitions)) + ", "
+        text += str(len(self._initiaux)) + ", "
+        text += str(len(self._terminaux)) + ")"
         return text
     # ------------------------------------------------------------------------------
-        #automate = [__init__.etats, __init__.alphabet, __init__.trans, __init__.etats_init, __init__.etats_term]
+        #automate = [__init__.etats, __init__.alphabet, __init__.trans, __init__.initiaux, __init__.terminaux]
         #pour chaque argument dans automate, on veut que le programme convertisse chaque cellule (etats, alphabet...)
         #en une str. Ensuite, il calcule le nombre de valeurs dans cette str, et la remplace dans automate.
 
@@ -63,17 +87,17 @@ class Automaton(object):
     # ------------------------------------------------------------------------------
     def __str__(self):
         text = "Etats :\n "
-        for e in self.etats: text += str(e) + " "
+        for e in self._etats: text += str(e) + " "
         text += "\nAlphabet :\n "
-        for a in self.alphabet: text += a + " "
+        for a in self._alphabet: text += a + " "
         text += "\nTransitions :\n"
-        for triplet in reversed(self.transitions):
+        for triplet in reversed(self._transitions):
             for c in triplet: text += " " + str(c) + " "
             text += "\n"
         text += "Etats initiaux :\n "
-        for i in self.etats_init: text += str(i) + " "
+        for i in self._initiaux: text += str(i) + " "
         text += "\nEtats terminaux :\n "
-        for t in self.etats_term: text += str(t) + " "
+        for t in self._terminaux: text += str(t) + " "
 
         return text
 
@@ -81,75 +105,78 @@ class Automaton(object):
         #On veut que la fonction permette de choisir un argument pour aller voir ses valeurs. 
         #On prend les informations renvoyées par __repr__ lorsqu'elles ont été converties en str. 
         #Puis on les classe en fonction des états, des transitions... Et on les affiche avec les 
-        #titres correspondants. 
+        #titres correspondants.
+    def verif_etats(self):
+        new_etats = set()
+        for etat in self._etats:
+            if isinstance(etat, int):
+                new_etats.add(etat)
+        return new_etats
 
-# ==============================================================================
-def verif_etats(etats):
-    new_etats = set()
-    for etat in etats:
-        if isinstance(etat, int):
-            new_etats.add(etat)
-    return new_etats
-
-def verif_alphabet(alphabet):
-    #boucle chaque caractère à faire pour garder que les bon caractères
-    new_alphabet = ''
-    for lettre in alphabet:
-        if 47<ord(str(lettre))<58 or 64<ord(str(lettre))<91 or 96<ord(str(lettre))<123:
-            new_alphabet += lettre
-    if new_alphabet == '':
-        return None
-    else:
+    def verif_alphabet(self):
+        # boucle chaque caractère à faire pour garder que les bon caractères
+        new_alphabet = ''
+        for lettre in self._alphabet:
+            if 47 < ord(str(lettre)) < 58 or 64 < ord(str(lettre)) < 91 or 96 < ord(str(lettre)) < 123:
+                new_alphabet += lettre
         return new_alphabet
 
-def verif_trans(transitions,etats, alphabet):
-    new_transitions = []
-    for triplet in transitions:
-        if type(triplet[0])==int and triplet[0] in etats and type(triplet[2])==int and triplet[2] in etats:
-            if type(triplet[1])==str:
-                inAlphabet = True
-                for t in triplet[1]:
-                    if not t in alphabet:
-                        inAlphabet = False
-                        break
-                if inAlphabet== True:
-                    new_transitions.append(triplet)
-    if new_transitions == []:
-        return None
-    else:
-        return new_transitions
-    #besoin de test int-str-int dans une boucle car tableau de transitions
+    def verif_trans(self):
+        new_transitions = []
+        for triplet in self._transitions:
+            if type(triplet[0]) == int and triplet[0] in self._etats and type(triplet[2]) == int and triplet[2] in self._etats:
+                if type(triplet[1]) == str:
+                    inAlphabet = True
+                    for t in triplet[1]:
+                        if not t in self._alphabet:
+                            inAlphabet = False
+                            break
+                    if inAlphabet == True:
+                        new_transitions.append(triplet)
+        if new_transitions == []:
+            return None
+        else:
+            return new_transitions
+        # besoin de test int-str-int dans une boucle car tableau de transitions
 
-def verif_etats_init(etats_init, etats):
-    new_etats_init = []
-    for etat_init in etats_init:
-        if isinstance(etat_init, int) and etat_init in etats:
-            new_etats_init.append(etat_init)
-    if new_etats_init == []:
-        return None
-    else:
-        return new_etats_init
+    def verif_initiaux(self):
+        new_initiaux = []
+        for etat_init in self._initiaux:
+            if isinstance(etat_init, int) and etat_init in self._etats:
+                new_initiaux.append(etat_init)
+        if new_initiaux == []:
+            return None
+        else:
+            return new_initiaux
 
-def verif_etats_term(etats_term, etats):
-    new_etats_term = []
-    for etat_term in etats_term:
-        if isinstance(etat_term, int) and etat_term in etats:
-            new_etats_term.append(etat_term)
-    if new_etats_term == []:
-        return None
-    else:
-        return new_etats_term
+    def verif_terminaux(self):
+        new_terminaux = []
+        for etat_term in self._terminaux:
+            if isinstance(etat_term, int) and etat_term in self._etats:
+                new_terminaux.append(etat_term)
+        if new_terminaux == []:
+            return None
+        else:
+            return new_terminaux
 
-    #Automate fini : Nombre d etats fini
+        # Automate fini : Nombre d etats fini
 
-    #Automate fini déterministe : Un symbole traite a la fois qui ne part que dans une direction pour chaque etat
+        # Automate fini déterministe : Un symbole traite a la fois qui ne part que dans une direction pour chaque etat
 
-    #Automate fini déterministe complet : Chaque etat possede une solution de passage pour chaque element de l alphabet
-                                         #On a aussi l etat puits qui correspond au traitement errone d un etat
+        # Automate fini déterministe complet : Chaque etat possede une solution de passage pour chaque element de l alphabet
+        # On a aussi l etat puits qui correspond au traitement errone d un etat
+
+    def access(self):
+        pass
+        # pour chaque état initial regarder s'il existe un triplet qui a pour début l'etat initial pour chaque états non initiaux
+
+# ==============================================================================
+
 
 
 # ==============================================================================
 if __name__ == "__main__":
     a = Automaton(range(4), "abc", [(0, 'a', 0), (0, 'b', 1), (2, 'cc', 3)], [0,2], [1])
-    # c = BasicReader('automata/automata_0')
+    # a = Automaton("automata/automata_0.aut")
+    print(a)
 # ==============================================================================
