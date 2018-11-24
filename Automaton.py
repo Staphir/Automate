@@ -188,7 +188,7 @@ class Automaton(object):
         # On a aussi l etat puits qui correspond au traitement errone d un etat
 
     def access(self):
-        e_access = self._initiaux
+        e_access = self._initiaux.copy()
         e_second = e_access
         end = False
         while end == False:
@@ -200,18 +200,42 @@ class Automaton(object):
             else:
                 e_access.union(e_second)
         return Automaton(e_access,self._alphabet,self._transitions,self._initiaux,self._terminaux)
-        # pour chaque état initial regarder s'il existe un triplet qui a pour début l'etat initial pour chaque états non initiaux
 
+
+    def deterministe(self):
+        self.access()
+
+        #1-éliminer les liaisons suppérieurs à 1
+        e_new = self._etats.copy()
+        t_new = self._transitions.copy() #ATTENTION bien mettre .copy() car sinon modification directement sur le self
+        for triplet in self._transitions:
+            long = len(triplet[1])
+            if long > 1:
+                #(a)
+                t_new.remove(triplet)
+                #(b)
+                for i in range(1,long):
+                    e_new.add(str(triplet[0])+"q"+str(i))
+                #(c)
+                t_new.add((triplet[0],triplet[1][0],str(triplet[0])+"q1"))
+                for i in range(2,long):
+                    t_new.add((str(triplet[0])+"q"+str(i-1),triplet[1][i-1],str(triplet[0])+"q"+str(i)))
+                t_new.add((str(triplet[0])+"q"+str(long-1),triplet[1][long-1],triplet[2]))
+
+        #2-tableau déterminisation
+
+        self._afn = False
+        self._afd = True
 # ==============================================================================
 
 
 
 # ==============================================================================
 if __name__ == "__main__":
-    a = Automaton(range(4), "bca", [(0, 'a', 0), (0, 'b', 1), (2, 'cc', 0)], [0,2], [1])
+    a = Automaton(range(4), "bca", [(0, 'a', 0), (0, 'b', 1), (2, 'cabc', 0)], [0,2], [1])
     b = Automaton("automata/automata_1.aut")
     # a = Automaton()
     # print(a)
     # print(repr(a.automata))
-    print(a==8)
+    a.deterministe()
     # ==============================================================================
