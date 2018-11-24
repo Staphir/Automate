@@ -6,7 +6,7 @@ from automata.rwAutomata import *
 class Automaton(object):
     def __init__(self, *args):
         if len(args) == 0:
-            self._etats = [0]
+            self._etats = {0}
             self._alphabet = ""
             self._transitions = []
             self._initiaux = [0]
@@ -19,6 +19,12 @@ class Automaton(object):
             self._initiaux = file.initiaux
             self._terminaux = file.terminaux
         elif len(args) == 5:
+            self._etats = args[0]
+            self._alphabet = args[1]
+            self._transitions = args[2]
+            self._initiaux = args[3]
+            self._terminaux = args[4]
+
             self._etats = self.verif_etats()
             # N'accepte que les entiers
             self._alphabet = self.verif_alphabet()
@@ -33,6 +39,10 @@ class Automaton(object):
                   "- Automate(file.aut) -> automate créé à partir d'un fichier .aut\n"
                   "- Automate(Q,Sigma,Delta,initial_states,accepting_states)")
 
+        self._afd = True
+        self._afdc = False
+        self._afn = True
+
         #Si etats, alphabet, trans, initiaux et terminaux sont vides :
            #création d un automate reconnaissant le langage vide : " "
 
@@ -42,26 +52,24 @@ class Automaton(object):
            #on construit un automate reconnaissant le langage vide : " "
 
     # ------------------------------------------------------------------------------
-    #property
     @property
-    def afd(self): return
+    def afd(self): return self._afd
     @property
-    def afdc(self): return
+    def afdc(self): return self._afdc
     @property
-    def afn(self): return
+    def afn(self): return self._afn
     @property
-    # pas encore bon
-    def automata(self): return "(" + str(self._etats) + ", " + self._alphabet + ", " + str(self._transitions) + ", " + str(self._initiaux) + ", " + str(self._terminaux) + ")"
+    def automata(self): return (list(self._etats),list(self._alphabet),list(self._transitions),list(self._initiaux),list(self._terminaux))
     @property
     def Q(self): return sorted(self._etats)
     @property
-    def Sigma(self): return
+    def Sigma(self): return sorted(self._alphabet)
     @property
-    def Delta(self): return
+    def Delta(self): return sorted(self._transitions)
     @property
-    def S(self): return
+    def S(self): return sorted(self._initiaux)
     @property
-    def T(self): return
+    def T(self): return sorted(self._terminaux)
 
     # ------------------------------------------------------------------------------
     def __repr__(self):
@@ -176,7 +184,9 @@ class Automaton(object):
 
 # ==============================================================================
 if __name__ == "__main__":
-    a = Automaton(range(4), "abc", [(0, 'a', 0), (0, 'b', 1), (2, 'cc', 3)], [0,2], [1])
-    # a = Automaton("automata/automata_0.aut")
-    print(a)
-# ==============================================================================
+    # a = Automaton(range(4), "bca", [(0, 'a', 0), (0, 'b', 1), (2, 'cc', 3)], [0,2], [1])
+    a = Automaton("automata/automata_0.aut")
+    # a = Automaton()
+    # print(a)
+    print(repr(a.automata))
+    # ==============================================================================
