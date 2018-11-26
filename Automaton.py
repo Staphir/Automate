@@ -59,7 +59,7 @@ class Automaton(object):
     @property
     def afn(self): return self._afn
     @property
-    def automata(self): return (list(self._etats),list(self._alphabet),list(self._transitions),list(self._initiaux),list(self._terminaux))
+    def automata(self): return (sorted(list(self._etats)),sorted(list(self._alphabet)),sorted(list(self._transitions)),sorted(list(self._initiaux)),sorted(list(self._terminaux)))
     @property
     def Q(self): return sorted(list(self._etats))
     @property
@@ -203,11 +203,20 @@ class Automaton(object):
 
 
     def deterministe(self):
-        self.access()
+        a_access = self.access()
+        e_new = a_access._etats.copy()
+        t_new = a_access._transitions.copy() #ATTENTION bien mettre .copy() car sinon modification directement sur le self
+        # 1-un seul état initial
+        e_new.add("s")
+        for init in self._initiaux:
+            t_new.add(('s','',str(init)))
 
-        #1-éliminer les liaisons suppérieurs à 1
-        e_new = self._etats.copy()
-        t_new = self._transitions.copy() #ATTENTION bien mettre .copy() car sinon modification directement sur le self
+        # 2-un seul état final
+        e_new.add("f")
+        for term in self._terminaux:
+            t_new.add((str(term),'','f'))
+
+        # 3-éliminer les liaisons suppérieurs à 1
         for triplet in self._transitions:
             long = len(triplet[1])
             if long > 1:
@@ -222,7 +231,8 @@ class Automaton(object):
                     t_new.add((str(triplet[0])+"q"+str(i-1),triplet[1][i-1],str(triplet[0])+"q"+str(i)))
                 t_new.add((str(triplet[0])+"q"+str(long-1),triplet[1][long-1],triplet[2]))
 
-        #2-tableau déterminisation
+        # 4-tableau déterminisation
+
 
         self._afn = False
         self._afd = True
@@ -232,10 +242,10 @@ class Automaton(object):
 
 # ==============================================================================
 if __name__ == "__main__":
-    a = Automaton(range(4), "bca", [(0, 'a', 0), (0, 'b', 1), (2, 'cabc', 0)], [0,2], [1])
+    # a = Automaton(range(4), "bca", [(0, 'a', 0), (0, 'b', 1), (2, 'cabc', 0)], [0,2], [1])
     b = Automaton("automata/automata_1.aut")
     # a = Automaton()
     # print(a)
     # print(repr(a.automata))
-    a.deterministe()
+    print(b.automata)
     # ==============================================================================

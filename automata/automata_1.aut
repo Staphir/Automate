@@ -1,10 +1,10 @@
 # sujet 2018-2019
-> 0 4 # initiaux
+> 0 q4 # initiaux
 < 2 3 # terminaux
 3 abc 0 # une transition
 > 3 # un initial
 1 ! 2 # refus on ne prend que les lettres ou les chiffres
 0 4
-4 b1 2 # acceptation
+q4 b 2 # acceptation
 4 c 4
 
