@@ -52,12 +52,12 @@ class Automaton(object):
         self._afn = True
 
         #Si etats, alphabet, trans, initiaux et terminaux sont vides :
-           #création d un automate reconnaissant le langage vide : " "
+        #création d un automate reconnaissant le langage vide : " "
 
         #Pour chaque argument, si il existe:
-           #on le traite comme un fichier dans le programme BasicReader
+        #on le traite comme un fichier dans le programme BasicReader
         #mais si un seul de ces arguments existe pas:
-           #on construit un automate reconnaissant le langage vide : " "
+        #on construit un automate reconnaissant le langage vide : " "
 
     # ------------------------------------------------------------------------------
     @property
@@ -89,16 +89,16 @@ class Automaton(object):
         text += str(len(self._terminaux)) + ")"
         return text
     # ------------------------------------------------------------------------------
-        #automate = [__init__.etats, __init__.alphabet, __init__.trans, __init__.initiaux, __init__.terminaux]
-        #pour chaque argument dans automate, on veut que le programme convertisse chaque cellule (etats, alphabet...)
-        #en une str. Ensuite, il calcule le nombre de valeurs dans cette str, et la remplace dans automate.
+    #automate = [__init__.etats, __init__.alphabet, __init__.trans, __init__.initiaux, __init__.terminaux]
+    #pour chaque argument dans automate, on veut que le programme convertisse chaque cellule (etats, alphabet...)
+    #en une str. Ensuite, il calcule le nombre de valeurs dans cette str, et la remplace dans automate.
 
-        #ATTENTION : les transitions sont délimitées par des parenthèses. (1 aa 2) c'est une seule transition et pas 4.
-        #Il faut peut etre compacter chaque transition (1aa2) puis les décompacter au moment de l'affichage ?
+    #ATTENTION : les transitions sont délimitées par des parenthèses. (1 aa 2) c'est une seule transition et pas 4.
+    #Il faut peut etre compacter chaque transition (1aa2) puis les décompacter au moment de l'affichage ?
 
-        #ATTENTION : les valeurs de l'alphabet sont des triplets. je ne sais pas si ça crée une contrainte...
+    #ATTENTION : les valeurs de l'alphabet sont des triplets. je ne sais pas si ça crée une contrainte...
 
-        #A la fin on renvoie automate, et on aura un truc du genre automate(4,3,1,2,1)
+    #A la fin on renvoie automate, et on aura un truc du genre automate(4,3,1,2,1)
 
     # ------------------------------------------------------------------------------
     def __str__(self):
@@ -240,54 +240,63 @@ class Automaton(object):
                 t_new.add((str(triplet[0])+"q"+str(long-1),triplet[1][long-1],triplet[2]))
 
         # 4-nouvel état sans épsilones
-        e_epsi = {}
+        e_epsilone = {}
         continuer = True
         for etat in e_new:
-            e_tmp = {etat}
+            i_new_etatmp = {etat}
             while continuer == True:
-                len_past = len(e_tmp)
+                len_past = len(i_new_etatmp)
                 continuer = False
                 for triplet in t_new:
-                    if triplet[0] in e_tmp and triplet[1] == '':
-                        e_tmp.add(triplet[2])
-                if len(e_tmp)>len_past:
+                    if triplet[0] in i_new_etatmp and triplet[1] == '':
+                        i_new_etatmp.add(triplet[2])
+                if len(i_new_etatmp)>len_past:
                     continuer = True
-            e_epsi[etat] = e_tmp
+            e_epsilone[etat] = i_new_etatmp
             continuer = True
 
         # 5-tableau de fusion
-        e_deter = {0:e_epsi['s']}
+        e_deterministe = {0:e_epsilone['s']}
         dict_trans = {}
-        end = False
         nbe = 0
-        e_t = 0
-        while end == False:
-            end = True
-            while e_t in e_deter.keys():
-                e_d = e_deter[e_t]
-                for lettre in self._alphabet:
-                    s_tmp = set()
-                    for t in e_d:
-                        for triplet in self._transitions:
-                            if triplet[0] == t and triplet[1] == lettre:
-                                s_tmp.add(triplet[2])
-                        e_equi = set()
-                        for e_acc in s_tmp:
-                            e_equi.update(e_epsi[e_acc])
-                        if not e_equi in e_deter.values() and e_equi :
-                            nbe += 1
-                            e_deter[nbe] = e_equi
-                            dict_trans[nbe] = set()
-                            end = False
-                        elif e_equi:
-                            for key in e_deter.keys():
-                                if e_deter[key] == e_equi:
-                                    dict_trans[nbe].update({(e_t,lettre,key)})
-                e_t += 1
-        print(e_deter)
-        print(dict_trans)
-        self._afn = False
-        self._afd = True
+        i_new_etat = 0
+        while i_new_etat in e_deterministe.keys():
+            ensemble_depuis = e_deterministe[i_new_etat]
+            dict_trans[i_new_etat] = set()
+            for lettre in self._alphabet:
+                # print(" lettre : "+lettre)
+                ensemble_access = set()
+                e_equivalent = set()
+                for i in ensemble_depuis:
+                    for triplet in t_new:
+                        if triplet[0] == i and triplet[1] == lettre:
+                            ensemble_access.add(triplet[2])
+                    for e_acc in ensemble_access:
+                        e_equivalent.update(e_epsilone[e_acc])
+                if e_equivalent:
+                    if not e_equivalent in e_deterministe.values():
+                        nbe += 1
+                        e_deterministe[nbe] = e_equivalent
+                        dict_trans[i_new_etat].update({(i_new_etat, lettre, nbe)})
+                    else:
+                        etat_arrive = nbe
+                        for key in e_deterministe.keys():
+                            if e_deterministe[key] == e_equivalent:
+                                etat_arrive = key
+                                break
+                        dict_trans[i_new_etat].update({(i_new_etat, lettre, etat_arrive)})
+            i_new_etat += 1
+
+        transitions_finales = set()
+        for key in dict_trans:
+            transitions_finales.update(dict_trans.get(key))
+
+        etats_finaux = []
+        for key in e_deterministe:
+            if 'f' in e_deterministe.get(key):
+                etats_finaux.append(key)
+
+        return Automaton(range(len(e_deterministe)), self._alphabet, transitions_finales, [0], etats_finaux)
 # ==============================================================================
 
 
@@ -300,4 +309,6 @@ if __name__ == "__main__":
     # print(repr(a.automata))
     # print(b.automata)
     b.deterministe()
+    # d = {'a':{2,8,3},'r':{7,6,9}}
+    # print([etat for etat, ensemble in d.items() if ensemble == {7,6,9}])
     # ==============================================================================
