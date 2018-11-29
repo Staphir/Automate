@@ -77,7 +77,7 @@ class Automaton(object):
     @property
     def S(self): return sorted(list(self._initiaux))
     @property
-    def T(self): return sorted(list(self._terminaux))
+    def F(self): return sorted(list(self._terminaux))
 
     # ------------------------------------------------------------------------------
     def __repr__(self):
@@ -121,7 +121,7 @@ class Automaton(object):
 
     def __eq__(self, other):
         assert isinstance(other,Automaton), "comparaison possible uniquement entre deux automates"
-        return self._alphabet == other.Sigma
+        pass
 
         #On veut que la fonction permette de choisir un argument pour aller voir ses valeurs. 
         #On prend les informations renvoyées par __repr__ lorsqu'elles ont été converties en str. 
@@ -133,7 +133,6 @@ class Automaton(object):
         for i in var:
             s.add(i)
         return s
-
 
     def _verif_etats(self):
         new_etats = set()
@@ -195,6 +194,12 @@ class Automaton(object):
         # Automate fini déterministe complet : Chaque etat possede une solution de passage pour chaque element de l alphabet
         # On a aussi l etat puits qui correspond au traitement errone d un etat
 
+    def _reverse(self):
+        nouvelle_transitions = {(triplet[2], triplet[1], triplet[0]) for triplet in self._transitions}
+        e_initiaux = {e_t for e_t in self._terminaux}
+        e_terminaux = {e_i for e_i in self._initiaux}
+        return Automaton(self._etats, self._alphabet, nouvelle_transitions, e_initiaux, e_terminaux)
+
     def access(self):
         e_access = self._initiaux.copy()
         e_second = e_access.copy()
@@ -208,7 +213,6 @@ class Automaton(object):
             else:
                 e_access.update(e_second)
         return Automaton(e_access,self._alphabet,self._transitions,self._initiaux,self._terminaux)
-
 
     def deterministe(self):
         a_access = self.access()
@@ -293,10 +297,60 @@ class Automaton(object):
 
         etats_finaux = []
         for key in e_deterministe:
-            if 'f' in e_deterministe.get(key):
+            if 'f' in e_deterministe[key]:
                 etats_finaux.append(key)
 
         return Automaton(range(len(e_deterministe)), self._alphabet, transitions_finales, [0], etats_finaux)
+
+    def minimal(self):
+        auto = self.deterministe()._reverse().deterministe()._reverse().deterministe()
+
+        return auto
+
+    def complete(self):
+        a_deterministe = self.deterministe()
+        nouvelles_transitions = a_deterministe._transitions.copy()
+        nouveaux_etats = a_deterministe._etats.copy()
+        dict_alphabet_etat = {}
+        etat_puit = -1
+        # Création dictionnaire avec pour chaque état l'alphabet
+        for etat in nouveaux_etats:
+            dict_alphabet_etat[etat] = set(a_deterministe._alphabet)
+        # Supprimme les lettres déjà utilisé dans une transition
+        for t in a_deterministe._transitions:
+            # print(t[0])
+            # print(dict_alphabet_etat[t[0]])
+            dict_alphabet_etat[t[0]].discard(t[1])
+        # Avons-nous besoin de nouveaux état et donc d'un puit
+        for value in dict_alphabet_etat.values():
+            if value != {}:
+                etat_puit = len(nouveaux_etats)
+                nouveaux_etats.update({etat_puit})
+                dict_alphabet_etat[etat_puit] = set(a_deterministe._alphabet)
+                break
+        # Ajout des nouvelles transitions
+        if etat_puit != -1:
+            for key in dict_alphabet_etat.keys():
+                if key:
+                    for lettre in dict_alphabet_etat[key]:
+                        nouvelles_transitions.update({(key,lettre,etat_puit)})
+
+        return Automaton(nouveaux_etats, a_deterministe._alphabet, nouvelles_transitions, a_deterministe._initiaux, a_deterministe._terminaux)
+
+    def complement(self):
+        pass
+
+    def union(self, *automatons):
+        assert isinstance(automatons, Automaton), "L'argument doit être un automate"
+        # automaton2.deterministe()
+        automaton1 = Automaton(self._etats.copy(), self._alphabet.copy(), self._transitions.copy(), self._initiaux.copy(),self._terminaux.copy())
+        dict_etats_union = {}
+
+        nouvel_alphabet = ''
+        i = 0
+
+
+
 # ==============================================================================
 
 
@@ -304,11 +358,13 @@ class Automaton(object):
 # ==============================================================================
 if __name__ == "__main__":
     # a = Automaton(range(4), "bca", [(0, 'a', 0), (0, '', 1), (2, 'cabc', 0), (3,'b',2)], [0,2], [1])
-    b = Automaton("automata/automata_cours.aut")
-    # a = Automaton()
-    # print(repr(a.automata))
-    # print(b.automata)
-    b.deterministe()
-    # d = {'a':{2,8,3},'r':{7,6,9}}
-    # print([etat for etat, ensemble in d.items() if ensemble == {7,6,9}])
+    b = Automaton("automata/automata_coursA1.aut")
+    c = Automaton("automata/automata_coursA2.aut")
+    d = Automaton("automata/automata_coursA3.aut")
+    e = Automaton("automata/automata_coursA4.aut")
+    # print(a.minimal().automata)
+    print(b.deterministe().automata)
+    print(c.minimal().automata)
+    print(d.minimal().automata)
+    print(e.minimal().automata)
     # ==============================================================================
