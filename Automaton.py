@@ -46,17 +46,16 @@ class Automaton(object):
                   "- Automate(file.aut) -> automate créé à partir d'un fichier .aut\n"
                   "- Automate(Q,Sigma,Delta,initial_states,accepting_states)")
             return
-        if self.test_complete():
-            self._afdc = True
-            self._afd = False
-            self._afn = False
-        elif self.test_deterministe():
-            self._afdc = False
-            self._afd = self == self.deterministe()
-            self._afn = False
+
+        self._afn = False
+        self._afd = False
+        self._afdc = False
+        if self.test_deterministe():
+            if self.test_complete():
+                self._afdc = True
+            else:
+                self._afd = True
         else:
-            self._afdc = False
-            self._afd = False
             self._afn = True
 
         #Si etats, alphabet, trans, initiaux et terminaux sont vides :
@@ -203,10 +202,26 @@ class Automaton(object):
         # On a aussi l etat puits qui correspond au traitement errone d un etat
 
     def test_complete(self):
-        pass
+        # on considère que l'automate envoyé est déterministe (donc test_deterministe déjà fait)
+        if len(self._alphabet)*len(self._etats) == len(self._transitions):
+            return True
+        else:
+            return False
 
     def test_deterministe(self):
-        pass
+        #dico états
+        #mettre lettres des transitions de l'état
+        #si plusieurs fois même lettre alors pas bon
+        dico_etats = {}
+        for etat in self._etats: dico_etats[etat] = set()
+        for etat in self._etats:
+            for triplet in self._transitions:
+                if triplet[0] == etat:
+                    if triplet[1] in dico_etats[triplet[0]]:
+                        return False
+                    else:
+                        dico_etats[triplet[0]].update({triplet[1]})
+        return True
 
     def _reverse(self):
         nouvelle_transitions = {(triplet[2], triplet[1], triplet[0]) for triplet in self._transitions}
@@ -408,12 +423,12 @@ class Automaton(object):
 # ==============================================================================
 if __name__ == "__main__":
     # a = Automaton(range(4), "bca", [(0, 'a', 0), (0, '', 1), (2, 'cabc', 0), (3,'b',2)], [0,2], [1,2])
-    b = Automaton("automata/automata_coursA1.aut")
-    c = Automaton("automata/automata_coursA2.aut")
-    # d = Automaton("automata/automata_coursA3.aut")
+    # b = Automaton("automata/automata_coursA1.aut")
+    # c = Automaton("automata/automata_coursA2.aut")
+    d = Automaton("automata/automata_coursA3.aut")
     # e = Automaton("automata/automata_coursA4.aut")
     # print(a.deterministe().automata)
-    print(b.minimal().automata)
+    print(d.afdc)
     # print(c.deterministe().automata)
     # print(c.minimal().automata)
     # print(d.minimal().automata)
