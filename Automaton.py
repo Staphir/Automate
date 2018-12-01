@@ -50,21 +50,13 @@ class Automaton(object):
         self._afn = False
         self._afd = False
         self._afdc = False
-        if self.test_deterministe():
-            if self.test_complete():
+        if self._test_deterministe():
+            if self._test_complete():
                 self._afdc = True
             else:
                 self._afd = True
         else:
             self._afn = True
-
-        #Si etats, alphabet, trans, initiaux et terminaux sont vides :
-        #création d un automate reconnaissant le langage vide : " "
-
-        #Pour chaque argument, si il existe:
-        #on le traite comme un fichier dans le programme BasicReader
-        #mais si un seul de ces arguments existe pas:
-        #on construit un automate reconnaissant le langage vide : " "
 
     # ------------------------------------------------------------------------------
     @property
@@ -95,17 +87,6 @@ class Automaton(object):
         text += str(len(self._initiaux)) + ", "
         text += str(len(self._terminaux)) + ")"
         return text
-    # ------------------------------------------------------------------------------
-    #automate = [__init__.etats, __init__.alphabet, __init__.trans, __init__.initiaux, __init__.terminaux]
-    #pour chaque argument dans automate, on veut que le programme convertisse chaque cellule (etats, alphabet...)
-    #en une str. Ensuite, il calcule le nombre de valeurs dans cette str, et la remplace dans automate.
-
-    #ATTENTION : les transitions sont délimitées par des parenthèses. (1 aa 2) c'est une seule transition et pas 4.
-    #Il faut peut etre compacter chaque transition (1aa2) puis les décompacter au moment de l'affichage ?
-
-    #ATTENTION : les valeurs de l'alphabet sont des triplets. je ne sais pas si ça crée une contrainte...
-
-    #A la fin on renvoie automate, et on aura un truc du genre automate(4,3,1,2,1)
 
     # ------------------------------------------------------------------------------
     def __str__(self):
@@ -130,16 +111,15 @@ class Automaton(object):
         assert isinstance(other,Automaton), "comparaison possible uniquement entre deux automates"
         pass
 
-        #On veut que la fonction permette de choisir un argument pour aller voir ses valeurs. 
-        #On prend les informations renvoyées par __repr__ lorsqu'elles ont été converties en str. 
-        #Puis on les classe en fonction des états, des transitions... Et on les affiche avec les 
-        #titres correspondants.
+    # ------------------------------------------------------------------------------
 
     def _transform_to_set(self,var):
         s = set()
         for i in var:
             s.add(i)
         return s
+
+    # ------------------------------------------------------------------------------
 
     def _verif_etats(self):
         new_etats = set()
@@ -148,6 +128,8 @@ class Automaton(object):
                 new_etats.add(etat)
         return new_etats
 
+    # ------------------------------------------------------------------------------
+
     def _verif_alphabet(self):
         # boucle chaque caractère à faire pour garder que les bon caractères
         new_alphabet = ''
@@ -155,6 +137,8 @@ class Automaton(object):
             if 47 < ord(str(lettre)) < 58 or 64 < ord(str(lettre)) < 91 or 96 < ord(str(lettre)) < 123 or not str(lettre):
                 new_alphabet += lettre
         return new_alphabet
+
+    # ------------------------------------------------------------------------------
 
     def _verif_trans(self):
         new_transitions = []
@@ -174,6 +158,8 @@ class Automaton(object):
             return new_transitions
         # besoin de test int-str-int dans une boucle car tableau de transitions
 
+    # ------------------------------------------------------------------------------
+
     def _verif_initiaux(self):
         new_initiaux = []
         for etat_init in self._initiaux:
@@ -183,6 +169,8 @@ class Automaton(object):
             return None
         else:
             return new_initiaux
+
+    # ------------------------------------------------------------------------------
 
     def _verif_terminaux(self):
         new_terminaux = []
@@ -194,21 +182,18 @@ class Automaton(object):
         else:
             return new_terminaux
 
-        # Automate fini : Nombre d etats fini
+    # ------------------------------------------------------------------------------
 
-        # Automate fini déterministe : Un symbole traite a la fois qui ne part que dans une direction pour chaque etat
-
-        # Automate fini déterministe complet : Chaque etat possede une solution de passage pour chaque element de l alphabet
-        # On a aussi l etat puits qui correspond au traitement errone d un etat
-
-    def test_complete(self):
-        # on considère que l'automate envoyé est déterministe (donc test_deterministe déjà fait)
+    def _test_complete(self):
+        # on considère que l'automate envoyé est déterministe (donc _test_deterministe déjà fait)
         if len(self._alphabet)*len(self._etats) == len(self._transitions):
             return True
         else:
             return False
 
-    def test_deterministe(self):
+    # ------------------------------------------------------------------------------
+
+    def _test_deterministe(self):
         #dico états
         #mettre lettres des transitions de l'état
         #si plusieurs fois même lettre alors pas bon
@@ -223,12 +208,7 @@ class Automaton(object):
                         dico_etats[triplet[0]].update({triplet[1]})
         return True
 
-    def _reverse(self):
-        nouvelle_transitions = {(triplet[2], triplet[1], triplet[0]) for triplet in self._transitions}
-        e_initiaux = {e_t for e_t in self._terminaux}
-        e_terminaux = {e_i for e_i in self._initiaux}
-        return Automaton(self._etats, self._alphabet, nouvelle_transitions, e_initiaux, e_terminaux)
-
+    # ------------------------------------------------------------------------------
 
     def access(self):
         e_access = self._initiaux.copy()
@@ -244,11 +224,12 @@ class Automaton(object):
                 e_access.update(e_second)
         return Automaton(e_access,self._alphabet,self._transitions,self._initiaux,self._terminaux)
 
+    # ------------------------------------------------------------------------------
+
     def deterministe(self):
         a_access = self.access()
         e_new = a_access._etats.copy()
         t_new = a_access._transitions.copy() #ATTENTION bien mettre .copy() car sinon modification directement sur le self
-        e_terminaux = a_access._terminaux
 
         # 1-un seul état initial
         e_new.add("s")
@@ -333,17 +314,98 @@ class Automaton(object):
         for key in e_deterministe:
             if 'f' in e_deterministe[key]:
                 etats_finaux.append(key)
-            # Si on ne crée pas 1 seul état terminal
-            # for term in e_terminaux:
-            #     if term in e_deterministe[key] and not key in etats_finaux:
-            #         etats_finaux.append(key)
 
         return Automaton(range(len(e_deterministe)), self._alphabet, transitions_finales, [0], etats_finaux)
 
-    def minimal(self):
-        auto = self._reverse().complete()._reverse().deterministe()
-        return auto
+    # ------------------------------------------------------------------------------
 
+    def minimal(self):
+        afdc = self.complete()
+        terminaux = set()
+        non_terminaux = set()
+        for t1 in afdc._terminaux:
+            for t2 in afdc._terminaux:
+                terminaux.update({(t1,t2)})
+        for e1 in afdc._etats.difference(afdc._terminaux):
+            for e2 in afdc._etats.difference(afdc._terminaux):
+                non_terminaux.update({(e1,e2)})
+        P = {*terminaux, *non_terminaux}
+        Q_F = set()
+
+        while 1:
+            for duo in P:
+                if duo[0] == duo[1]:
+                    Q_F.add((duo[0],duo[1]))
+                else:
+                    ok = True
+                    for lettre in afdc._alphabet:
+                        for triplet in afdc._transitions:
+                            if triplet[0] == duo[0] and triplet[1] == lettre:
+                                trans1 = triplet[2]
+                            if triplet[0] == duo[1] and triplet[1] == lettre:
+                                trans2 = triplet[2]
+                        if (trans1,trans2) not in P:
+                            ok = False
+                    if ok:
+                        d1 = (duo[0],duo[1])
+                        d2 = (duo[1],duo[0])
+                        Q_F.update({d1,d2})
+            if P == Q_F:
+                break
+            P = Q_F
+            Q_F = set()
+
+        equivalents = {}
+        for etat in afdc._etats: equivalents[etat] = set()
+        for duo in P: equivalents[duo[0]].update({duo[1]})
+        for etat in equivalents:
+            if len(equivalents[etat]) > 1:
+                for e_equi in equivalents[etat]:
+                    if e_equi != etat:
+                        #etats de l'automate
+                        a_discard = set()
+                        for e in afdc._etats:
+                            if e == e_equi:
+                                a_discard.add(e_equi)
+                        afdc._etats.difference_update(a_discard)
+                        #initiaux
+                        a_discard = set()
+                        a_union = set()
+                        for e in afdc._initiaux:
+                            if e == e_equi:
+                                a_discard.add(e_equi)
+                                a_union.add(etat)
+                        afdc._initiaux.difference_update(a_discard)
+                        afdc._initiaux.update(a_union)
+                        #terminaux
+                        a_discard = set()
+                        a_union = set()
+                        for e in afdc._terminaux:
+                            if e == e_equi:
+                                a_discard.add(e_equi)
+                                a_union.add(etat)
+                        afdc._terminaux.difference_update(a_discard)
+                        afdc._terminaux.update(a_union)
+                        #transitions
+                        a_discard = set()
+                        a_union = set()
+                        for triplet in afdc._transitions:
+                            if triplet[0] == e_equi and triplet[2] in afdc._etats:
+                                a_union.add((etat,triplet[1],triplet[2]))
+                                a_discard.add(triplet)
+                            if triplet[2] == e_equi and triplet[0] in afdc._etats:
+                                a_union.add((triplet[0],triplet[1],etat))
+                                a_discard.add(triplet)
+                            if triplet[0] == e_equi and triplet[2] == e_equi:
+                                a_union.add((etat,triplet[1],etat))
+                                a_discard.add((e_equi,triplet[1],e_equi))
+                        afdc._transitions.update(a_union)
+                        afdc._transitions.difference_update(a_discard)
+                        #efface du dico l'état équivalent
+                        equivalents[e_equi] = set()
+        return afdc
+
+    # ------------------------------------------------------------------------------
 
     def complete(self):
         a_deterministe = self.deterministe()
@@ -371,10 +433,16 @@ class Automaton(object):
                     for lettre in dict_alphabet_etat[key]:
                         nouvelles_transitions.update({(key,lettre,etat_puit)})
 
-        return Automaton(nouveaux_etats, a_deterministe._alphabet, nouvelles_transitions, a_deterministe._initiaux, a_deterministe._terminaux)
+        return Automaton(nouveaux_etats, a_deterministe._alphabet, nouvelles_transitions, a_deterministe._initiaux, a_deterministe._terminaux).access()
+
+    # ------------------------------------------------------------------------------
 
     def complement(self):
-        pass
+        complement = self.complete()
+        s_terminaux = complement._etats.difference(complement._terminaux)
+        return Automaton(complement._etats, complement._alphabet, complement._transitions, complement._initiaux, s_terminaux)
+
+    # ------------------------------------------------------------------------------
 
     def union(self, *automates):
         for i in automates:
@@ -385,11 +453,17 @@ class Automaton(object):
         nouvel_alphabet = ''
         i = 0
 
+    # ------------------------------------------------------------------------------
+
     def inter(self, automate2):
         pass
 
+    # ------------------------------------------------------------------------------
+
     def concat(self, automate2):
         pass
+
+    # ------------------------------------------------------------------------------
 
     def fermeture(self):
         auto_fermeture = Automaton(self._etats.copy(), self._alphabet.copy(), self._transitions.copy(), self._initiaux.copy(), self._terminaux.copy())
@@ -423,14 +497,19 @@ class Automaton(object):
 # ==============================================================================
 if __name__ == "__main__":
     # a = Automaton(range(4), "bca", [(0, 'a', 0), (0, '', 1), (2, 'cabc', 0), (3,'b',2)], [0,2], [1,2])
-    # b = Automaton("automata/automata_coursA1.aut")
+    b = Automaton("automata/automata_coursA1.aut")
     # c = Automaton("automata/automata_coursA2.aut")
-    d = Automaton("automata/automata_coursA3.aut")
+    # d = Automaton("automata/automata_coursA3.aut")
     # e = Automaton("automata/automata_coursA4.aut")
-    # print(a.deterministe().automata)
-    print(d.afdc)
-    # print(c.deterministe().automata)
-    # print(c.minimal().automata)
-    # print(d.minimal().automata)
-    # print(e.minimal().automata)
+    f = Automaton("automata/other.aut")
+    # s = {(0, 'a', 0), (0, '', 1), (2, 'cabc', 0), (3,'b',2)}
+    # for i in s:
+    #     if i[0] == 1:
+    #         s.add((0,i[1],i[2]))
+    #         s.remove(i)
+    #     if i[2] == 1:
+    #         s.add((i[0],i[1],0))
+    #         s.remove(i)
+    # print(s)
+    print(f.minimal().automata)
     # ==============================================================================
