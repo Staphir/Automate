@@ -318,20 +318,6 @@ class Automaton(object):
                         i_new_etatmp.append(triplet[2])
                 e_epsilon[etat] = i_new_etatmp
 
-            # while continuer == True:
-            #     len_past = len(i_new_etatmp)
-            #     continuer = False
-            #     for triplet in t_new:
-            #         if triplet[0] in i_new_etatmp and triplet[1] == '':
-            #             i_new_etatmp.add(triplet[2])
-            #             triplet_a_discard.add(triplet)
-            #
-            #     if len(i_new_etatmp)>len_past:
-            #         continuer = True
-        #       e_epsilon[etat] = i_new_etatmp
-        # for i in triplet_a_discard:
-        #     t_new.discard(i)
-
         # 5-tableau de fusion
         for key in e_epsilon: e_epsilon[key] = set(e_epsilon[key])
         e_deterministe = {0:e_epsilon['s']}
