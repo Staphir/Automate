@@ -202,9 +202,6 @@ class Automaton(object):
     # ------------------------------------------------------------------------------
 
     def _test_deterministe(self):
-        #dico états
-        #mettre lettres des transitions de l'état
-        #si plusieurs fois même lettre alors pas bon
         dico_etats = {}
         for etat in self._etats: dico_etats[etat] = set()
         for etat in self._etats:
@@ -280,14 +277,14 @@ class Automaton(object):
     def deterministe(self):
         a_access = self.access()
         e_new = a_access._etats.copy()
-        t_new = a_access._transitions.copy() #ATTENTION bien mettre .copy() car sinon modification directement sur le self
+        t_new = a_access._transitions.copy()
 
         # 1-un seul état initial
         e_new.add("s")
         for init in self._initiaux:
             t_new.add(('s','',init))
 
-        # 2-un seul état final ?
+        # 2-un seul état final
         e_new.add("f")
         for term in self._terminaux:
             t_new.add((term,'','f'))
@@ -309,7 +306,6 @@ class Automaton(object):
 
         # 4-nouvel état sans épsilones
         e_epsilon = {}
-        continuer = True
         for etat in e_new:
             i_new_etatmp = [etat]
             for state in i_new_etatmp :
