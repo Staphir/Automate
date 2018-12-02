@@ -1,7 +1,10 @@
 from automata.rwAutomata import *
-#Ici, le cardinal des ensembles, c'est juste le nombre de valeurs qu'il y a dans ces ensembles
-#Exemple : S = {0,1,3} alors cardinal de S = 3
 
+# ==============================================================================
+"""Project L3-IT : Atomate"""
+# ==============================================================================
+__author__  = "Lucie Thomasson & Maxime Dulieu"
+# ==============================================================================
 
 class Automaton(object):
     def __init__(self, *args):
