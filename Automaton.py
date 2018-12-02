@@ -1,4 +1,4 @@
-from automata.rwAutomata import *
+from rwAutomata import *
 
 # ==============================================================================
 """Project L3-IT : Atomate"""
