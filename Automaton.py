@@ -6,13 +6,13 @@ from automata.rwAutomata import *
 class Automaton(object):
     def __init__(self, *args):
         if len(args) == 0:
-            self._etats = {0}
+            self._etats = {0,1}
             self._alphabet = set()
             self._transitions = set()
             self._initiaux = {0}
-            self._terminaux = {0}
+            self._terminaux = {1}
         elif len(args) == 1:
-            if not BasicReader(args[0]) == []:
+            if not BasicReader(args[0]).etats == []:
                 file = BasicReader(args[0])
                 self._etats = self._transform_to_set(file.etats)
                 self._alphabet = self._transform_to_set(file.alphabet)
@@ -20,11 +20,11 @@ class Automaton(object):
                 self._initiaux = self._transform_to_set(file.initiaux)
                 self._terminaux = self._transform_to_set(file.terminaux)
             else:
-                self._etats = {0}
+                self._etats = {0,1}
                 self._alphabet = set()
                 self._transitions = set()
                 self._initiaux = {0}
-                self._terminaux = {0}
+                self._terminaux = {1}
         elif len(args) == 5:
             self._etats = args[0]
             self._alphabet = args[1]
@@ -109,14 +109,20 @@ class Automaton(object):
 
     def __eq__(self, other):
         assert isinstance(other,Automaton), "comparaison possible uniquement entre deux automates"
-        pass
+        return self < other and other < self
+
+    def __lt__(self, other):
+        assert isinstance(other,Automaton), "inférieur possible uniquement entre deux automates"
+        auto_inter = self.inter(other.complement())
+        return not auto_inter._terminaux
 
     # ------------------------------------------------------------------------------
 
     def _transform_to_set(self,var):
         s = set()
-        for i in var:
-            s.add(i)
+        if var:
+            for i in var:
+                s.add(i)
         return s
 
     # ------------------------------------------------------------------------------
@@ -134,7 +140,9 @@ class Automaton(object):
         # boucle chaque caractère à faire pour garder que les bon caractères
         new_alphabet = ''
         for lettre in self._alphabet:
-            if 47 < ord(str(lettre)) < 58 or 64 < ord(str(lettre)) < 91 or 96 < ord(str(lettre)) < 123 or not str(lettre):
+            if lettre == '':
+                new_alphabet += lettre
+            elif 47 < ord(str(lettre)) < 58 or 64 < ord(str(lettre)) < 91 or 96 < ord(str(lettre)) < 123 or not str(lettre):
                 new_alphabet += lettre
         return new_alphabet
 
@@ -210,6 +218,49 @@ class Automaton(object):
 
     # ------------------------------------------------------------------------------
 
+    def _changement_nom_etats(self, debut):
+        d_etats = {}
+        nouveaux_etats = set()
+        nouvelles_transitions = set()
+        nouveaux_initiaux = set()
+        nouveaux_terminaux = set()
+        c = debut
+        for e in self._etats:
+            d_etats[c] = e
+            c += 1
+        # transitions
+        for triplet in self._transitions:
+            t0 = triplet[0]
+            t2 = triplet[2]
+            for key in d_etats:
+                if triplet[0] == d_etats[key]:
+                    t0 = key
+                if triplet[2] == d_etats[key]:
+                    t2 = key
+            nouvelles_transitions.add((t0,triplet[1],t2))
+        # etats
+        for etat in self._etats:
+            for key in d_etats:
+                if etat == d_etats[key]:
+                    nouveaux_etats.add(key)
+                    break
+        # initiaux
+        for initial in self._initiaux:
+            for key in d_etats:
+                if initial == d_etats[key]:
+                    nouveaux_initiaux.add(key)
+                    break
+        # terminaux
+        for terminal in self._terminaux:
+            for key in d_etats:
+                if terminal == d_etats[key]:
+                    nouveaux_terminaux.add(key)
+                    break
+
+        return Automaton(nouveaux_etats, self._alphabet, nouvelles_transitions, nouveaux_initiaux, nouveaux_terminaux)
+
+    # ------------------------------------------------------------------------------
+
     def access(self):
         e_access = self._initiaux.copy()
         e_second = e_access.copy()
@@ -257,27 +308,33 @@ class Automaton(object):
                 t_new.add((str(triplet[0])+"q"+str(long-1),triplet[1][long-1],triplet[2]))
 
         # 4-nouvel état sans épsilones
-        e_epsilone = {}
+        e_epsilon = {}
         continuer = True
-        triplet_a_discard = set()
         for etat in e_new:
-            i_new_etatmp = {etat}
-            while continuer == True:
-                len_past = len(i_new_etatmp)
-                continuer = False
+            i_new_etatmp = [etat]
+            for state in i_new_etatmp :
                 for triplet in t_new:
-                    if triplet[0] in i_new_etatmp and triplet[1] == '':
-                        i_new_etatmp.add(triplet[2])
-                        triplet_a_discard.add(triplet)
-                for i in triplet_a_discard:
-                    t_new.discard(i)
-                if len(i_new_etatmp)>len_past:
-                    continuer = True
-            e_epsilone[etat] = i_new_etatmp
-            continuer = True
+                    if triplet[0] == state and triplet[1] == '' and triplet[2] not in i_new_etatmp:
+                        i_new_etatmp.append(triplet[2])
+                e_epsilon[etat] = i_new_etatmp
+
+            # while continuer == True:
+            #     len_past = len(i_new_etatmp)
+            #     continuer = False
+            #     for triplet in t_new:
+            #         if triplet[0] in i_new_etatmp and triplet[1] == '':
+            #             i_new_etatmp.add(triplet[2])
+            #             triplet_a_discard.add(triplet)
+            #
+            #     if len(i_new_etatmp)>len_past:
+            #         continuer = True
+        #       e_epsilon[etat] = i_new_etatmp
+        # for i in triplet_a_discard:
+        #     t_new.discard(i)
 
         # 5-tableau de fusion
-        e_deterministe = {0:e_epsilone['s']}
+        for key in e_epsilon: e_epsilon[key] = set(e_epsilon[key])
+        e_deterministe = {0:e_epsilon['s']}
         dict_trans = {}
         nbe = 0
         i_new_etat = 0
@@ -292,7 +349,7 @@ class Automaton(object):
                         if triplet[0] == i and triplet[1] == lettre:
                             ensemble_access.add(triplet[2])
                     for e_acc in ensemble_access:
-                        e_equivalent.update(e_epsilone[e_acc])
+                        e_equivalent.update(e_epsilon[e_acc])
                 if e_equivalent:
                     if not e_equivalent in e_deterministe.values():
                         nbe += 1
@@ -445,23 +502,71 @@ class Automaton(object):
     # ------------------------------------------------------------------------------
 
     def union(self, *automates):
+        automate_trie_1 = self._changement_nom_etats(1)
         for i in automates:
             assert isinstance(i, Automaton), "Les arguments doivent être des automates"
-        # automaton2.deterministe()
-        automaton1 = Automaton(self._etats.copy(), self._alphabet.copy(), self._transitions.copy(), self._initiaux.copy(),self._terminaux.copy())
-        dict_etats_union = {}
-        nouvel_alphabet = ''
-        i = 0
+        for auto in automates:
+            automate_trie_2 = auto._changement_nom_etats(len(automate_trie_1._etats)+1)
+            nouveaux_etats = {0}
+            nouveaux_etats.update(automate_trie_1._etats)
+            nouveaux_etats.update(automate_trie_2._etats)
+            nouveaux_etats.update({len(nouveaux_etats)})
+            nouvel_initial = {0}
+            etat_terminal = len(nouveaux_etats)-1
+            nouvel_terminal = {etat_terminal}
+            nouvelles_transitions = set()
+            for triplet in automate_trie_1._transitions: nouvelles_transitions.add(triplet)
+            for triplet in automate_trie_2._transitions: nouvelles_transitions.add(triplet)
+            for initial in automate_trie_1._initiaux: nouvelles_transitions.add((0,'',initial))
+            for initial in automate_trie_2._initiaux: nouvelles_transitions.add((0,'',initial))
+            for terminal in automate_trie_1._terminaux: nouvelles_transitions.add((terminal,'',etat_terminal))
+            for terminal in automate_trie_2._terminaux: nouvelles_transitions.add((terminal,'',etat_terminal))
+            nouvelle_alphabet = set()
+            nouvelle_alphabet.update(automate_trie_1._alphabet)
+            nouvelle_alphabet.update(automate_trie_2._alphabet)
+            automate_trie_1 = Automaton(nouveaux_etats, nouvelle_alphabet, nouvelles_transitions, nouvel_initial, nouvel_terminal)
+        return automate_trie_1
 
     # ------------------------------------------------------------------------------
 
     def inter(self, automate2):
-        pass
+        assert isinstance(automate2, Automaton), "L'argument doit être un automate"
+
+        complement_automate_1 = self.complement()
+        complement_automate_2 = automate2.complement()
+        automate_union = complement_automate_1.union(complement_automate_2)
+        automate_inter = automate_union.complement()
+
+        return automate_inter
 
     # ------------------------------------------------------------------------------
 
     def concat(self, automate2):
-        pass
+        assert isinstance(automate2, Automaton), "L'argument doit être un automate"
+
+        automate_trie_1 = self._changement_nom_etats(1)
+        nouveaux_etats = {0}
+        nouveaux_etats.update(automate_trie_1._etats)
+        nouvelles_transitions = set()
+        etat_terminal_1 = len(nouveaux_etats)-1
+        for triplet in automate_trie_1._transitions: nouvelles_transitions.add(triplet)
+        for initial in automate_trie_1._initiaux: nouvelles_transitions.add((0, '', initial))
+        for terminal in automate_trie_1._terminaux: nouvelles_transitions.add((terminal, '', etat_terminal_1))
+
+        automate_trie_2 = automate2._changement_nom_etats(len(nouveaux_etats)+1)
+        etat_initial_2 = len(nouveaux_etats)
+        nouveaux_etats.update({etat_initial_2})
+        nouveaux_etats.update(automate_trie_2._etats)
+        etat_terminal_2 = len(nouveaux_etats)
+        nouveaux_etats.update({etat_terminal_2})
+        for triplet in automate_trie_2._transitions: nouvelles_transitions.add(triplet)
+        for initial in automate_trie_2._initiaux: nouvelles_transitions.add((0, '', initial))
+        for terminal in automate_trie_2._terminaux: nouvelles_transitions.add((terminal, '', etat_terminal_2))
+        nouvelle_alphabet = set()
+        nouvelle_alphabet.update(automate_trie_1._alphabet)
+        nouvelle_alphabet.update(automate_trie_2._alphabet)
+
+        return Automaton(nouveaux_etats, nouvelle_alphabet, nouvelles_transitions, [0], [etat_terminal_2])
 
     # ------------------------------------------------------------------------------
 
@@ -498,18 +603,15 @@ class Automaton(object):
 if __name__ == "__main__":
     # a = Automaton(range(4), "bca", [(0, 'a', 0), (0, '', 1), (2, 'cabc', 0), (3,'b',2)], [0,2], [1,2])
     b = Automaton("automata/automata_coursA1.aut")
-    # c = Automaton("automata/automata_coursA2.aut")
+    c = Automaton("automata/automata_coursA2.aut")
     # d = Automaton("automata/automata_coursA3.aut")
+    # r = Automaton()
     # e = Automaton("automata/automata_coursA4.aut")
-    f = Automaton("automata/other.aut")
-    # s = {(0, 'a', 0), (0, '', 1), (2, 'cabc', 0), (3,'b',2)}
-    # for i in s:
-    #     if i[0] == 1:
-    #         s.add((0,i[1],i[2]))
-    #         s.remove(i)
-    #     if i[2] == 1:
-    #         s.add((i[0],i[1],0))
-    #         s.remove(i)
-    # print(s)
-    print(f.minimal().automata)
+    # f = Automaton("automata/other.aut")
+    # print(b.deterministe().automata)
+    # print(b.union(c).minimal().automata)
+    # print(b.concat(c).minimal().automata)
+    # print(b.inter(c).minimal().automata)
+    print(b==c)
+    print(c<b)
     # ==============================================================================
