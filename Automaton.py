@@ -587,16 +587,17 @@ class Automaton(object):
 # ==============================================================================
 if __name__ == "__main__":
     # a = Automaton(range(4), "bca", [(0, 'a', 0), (0, '', 1), (2, 'cabc', 0), (3,'b',2)], [0,2], [1,2])
-    b = Automaton("automata/automata_coursA1.aut")
-    c = Automaton("automata/automata_coursA2.aut")
+    # b = Automaton("automata/automata_coursA1.aut")
+    # c = Automaton("automata/automata_coursA2.aut")
     # d = Automaton("automata/automata_coursA3.aut")
     # r = Automaton()
     # e = Automaton("automata/automata_coursA4.aut")
-    # f = Automaton("automata/other.aut")
+    f = Automaton("automata/other.aut")
+    g = Automaton("automata/other1.aut")
+    print(f.inter(g))
     # print(b.deterministe().automata)
     # print(b.union(c).minimal().automata)
     # print(b.concat(c).minimal().automata)
     # print(b.inter(c).minimal().automata)
-    print(b==c)
-    print(c<b)
+
     # ==============================================================================
